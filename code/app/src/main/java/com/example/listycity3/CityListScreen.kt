@@ -1,5 +1,6 @@
 package com.example.listycity3
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,13 +26,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.modifier.modifierLocalConsumer
 
 @Composable
 fun CityListScreen(
     cities: List<City>,
     onAddCity: (City) -> Unit,
+    onEditCity: (City, City) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var selected by remember {mutableStateOf<City?>(null)}
+    var showEditCityFields by remember {mutableStateOf(false)}
+    var toEditName: String = selected?.name ?: String()
+    var toEditProvince: String = selected?.province?: String()
+    var editedName: String by remember(selected) { mutableStateOf(toEditName) }
+    var editedProvince: String by remember(selected) { mutableStateOf(toEditProvince) }
+
     var newCityName by remember { mutableStateOf("") }
     var newProvinceName by remember { mutableStateOf("") }
     var showAddCityFields by remember { mutableStateOf(false) }
@@ -89,10 +99,52 @@ fun CityListScreen(
                 }
             }
         }
+        if(showEditCityFields){
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ){
+                OutlinedTextField(
+                    value = editedName,
+                    onValueChange = {editedName = it},
+                    label = {Text("City")},
+                    modifier=Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                OutlinedTextField(
+                    value = editedProvince,
+                    onValueChange = {editedProvince = it},
+                    label = {Text("City")},
+                    modifier=Modifier.weight(1f)
+                )
+                Spacer(modifier=Modifier.width(8.dp))
+                Button(
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    onClick = {
+                        if (toEditName.isNotBlank() && toEditProvince.isNotBlank()) {
+                            onEditCity(
+                                City(name = toEditName, province = toEditProvince),
+                                City(name = editedName, province = editedProvince)
+                            )
+                            toEditName = ""
+                            toEditProvince = ""
+                            editedName = ""
+                            editedProvince = ""
+                            showEditCityFields = false
+                        }
+                    }
+                ) {
+                    Text("Edit City")
+                }
+
+            }
+        }
 
         LazyColumn(modifier = modifier.fillMaxSize()) {
             itemsIndexed(cities) { index, city ->
-                CityRow(city = city)
+                CityRow(city = city, onSelect = {selected = city
+                    showEditCityFields = true})
 
                 if (index < cities.lastIndex) {
                     HorizontalDivider()
@@ -103,11 +155,12 @@ fun CityListScreen(
 }
 
 @Composable
-fun CityRow(city: City) {
+fun CityRow(city: City, onSelect: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 16.dp)
+            .clickable(onClick = { onSelect() })
     ) {
         Text(
             text = city.name,
@@ -134,7 +187,8 @@ fun CityListScreenPreview() {
                 City("Vancouver", "BC"),
                 City("Calgary", "AB")
             ),
-            onAddCity = {}
+            onAddCity = {},
+            onEditCity = {} as (City, City) -> Unit
         )
     }
 }

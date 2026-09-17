@@ -15,4 +15,10 @@ class CityRepository {
     fun addCity(city: City){
         _cities.add(city)
     }
+    fun editCity(city: City, newCity: City){
+        val i = _cities.indexOf(city)
+        if(i != -1){
+            _cities[i] = newCity
+        }
+    }
 }
